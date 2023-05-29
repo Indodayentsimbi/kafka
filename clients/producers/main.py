@@ -1,6 +1,5 @@
 from confluent_kafka import Producer
-from producer_A.producer import func_producer
-from util import callback 
+from utils import func_producer,callback 
 import os
 from time import sleep
 import argparse
@@ -12,7 +11,7 @@ parser.add_argument("--topic",type=str)
 args = parser.parse_args()
 
 acks = os.environ.get("ACKS","all")
-idempotency = os.environ.get("ENABLE_IDEMPOTENCY",True)
+idempotency = os.environ.get("ENABLE_IDEMPOTENCE",True)
 servers = os.environ.get("BOOTSTRAP_SERVERS",args.bootstrap_servers)
 client = os.environ.get("CLIENT_ID","unkown")
 topic = os.environ.get("TOPIC",args.topic)

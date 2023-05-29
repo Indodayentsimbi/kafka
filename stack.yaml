@@ -18,7 +18,7 @@ services:
     hostname: broker_1
     container_name: broker_1
     ports:
-      - 9091:9091
+      - '9091:9091'
     networks: 
       - kafka
     depends_on: 
@@ -27,28 +27,9 @@ services:
     entrypoint: ["/bin/sh","-c"]
     command: | 
       "
-      kafka-topics --bootstrap-server broker_1:29091,localhost:9091 --list 
-      kafka-topics --bootstrap-server broker_1:29091,localhost:9091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
-      "
-      
-  consumer_a:
-    build:
-      context: ./clients
-      args:
-        CLIENT_TYPE: consumers
-    hostname: consumer_A
-    container_name: consumer_A
-    environment:
-      - CLIENT_ID=consumer_A
-      - TOPIC=topicA
-    # ports:
-    #   - 9092:9092
-    networks: 
-      - kafka
-    depends_on: 
-      - zookeeper
-      - broker_1  
-    env_file: ./clients/consumers/.common_consumers_env  
+      kafka-topics --bootstrap-server broker_1:29091 --list 
+      kafka-topics --bootstrap-server broker_1:29091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
+      " 
 
   producer_a:
     build:
@@ -60,11 +41,27 @@ services:
     environment:
       - CLIENT_ID=producer_A
       - TOPIC=topicA
-    # ports:
-    #   - 9092:9092
     networks: 
       - kafka
     depends_on: 
       - zookeeper
       - broker_1  
-    env_file: ./clients/producers/.common_producers_env       
+    env_file: ./clients/producers/.common_producers_env
+
+  consumer_a:
+    build:
+      context: ./clients
+      args:
+        CLIENT_TYPE: consumers
+    hostname: consumer_A
+    container_name: consumer_A
+    environment:
+      - GROUP_ID=group_1
+      - TOPIC=topicA
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper
+      - broker_1  
+      - producer_a
+    env_file: ./clients/consumers/.common_consumers_env     

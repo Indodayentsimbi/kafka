@@ -1,3 +1,11 @@
+def callback(err, event):
+    if err:
+        print(f'Produce to topic {event.topic()} failed for event: {event.key()}')
+    else:
+        val = event.value().decode('utf8')
+        print(f'{val} sent to partition {event.partition()}.')
+
+
 def func_producer(producer,topic,value,key,callback):
     """
     This function takes as input the following:
@@ -10,4 +18,4 @@ def func_producer(producer,topic,value,key,callback):
     try:
         producer.produce(topic=topic,value=value,key=key,on_delivery=callback)
     except Exception as e:
-        print(e)
+        print(e)        
