@@ -1,0 +1,5 @@
+mnt /var/lib/kafka (log directory for kafka)
+kafka-topics --bootstrap-server broker_1:29092 --topic orders --partitions 3 --replication 1 --create
+kafka-topics --bootstrap-server broker_1:29092 --topic orders --describe
+kafka-console-consumer --bootstrap-server broker_1:29092 --topic orders
+kafka-console-producer --bootstrap-server broker_1:29092 --topic orders 

@@ -1,0 +1,70 @@
+version: "3.9"
+############################################
+networks:
+  kafka:
+    name: kafka
+############################################
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    networks: 
+      - kafka
+    env_file: ./zookeeper/.env
+
+  broker_1:
+    image: confluentinc/cp-kafka:7.3.0
+    hostname: broker_1
+    container_name: broker_1
+    ports:
+      - 9091:9091
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper  
+    env_file: ./brokers/.broker_1_env
+    entrypoint: ["/bin/sh","-c"]
+    command: | 
+      "
+      kafka-topics --bootstrap-server broker_1:29091,localhost:9091 --list 
+      kafka-topics --bootstrap-server broker_1:29091,localhost:9091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
+      "
+      
+  consumer_a:
+    build:
+      context: ./clients
+      args:
+        CLIENT_TYPE: consumers
+    hostname: consumer_A
+    container_name: consumer_A
+    environment:
+      - CLIENT_ID=consumer_A
+      - TOPIC=topicA
+    # ports:
+    #   - 9092:9092
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper
+      - broker_1  
+    env_file: ./clients/consumers/.common_consumers_env  
+
+  producer_a:
+    build:
+      context: ./clients
+      args:
+        CLIENT_TYPE: producers
+    hostname: producer_A
+    container_name: producer_A
+    environment:
+      - CLIENT_ID=producer_A
+      - TOPIC=topicA
+    # ports:
+    #   - 9092:9092
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper
+      - broker_1  
+    env_file: ./clients/producers/.common_producers_env       
