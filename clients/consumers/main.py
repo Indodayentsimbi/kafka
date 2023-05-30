@@ -35,9 +35,9 @@ if __name__ == "__main__":
             elif event.error():
                 raise KafkaException(event.error())
             else:
-                val = event.value().decode("utf8")
+                val = event.value().decode("utf-8")
                 partition = event.partition()
-                print("Received: {} from partition {}".format(val,partition)) 
+                print("Received: {} from partition {} on topic {}".format(val,partition,event.topic())) 
                 consumer.commit(event)     
     except KeyboardInterrupt:
         print("Cancelled by user")

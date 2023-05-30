@@ -15,5 +15,7 @@ ARG CLIENT_TYPE=producers
 
 COPY ${CLIENT_TYPE} ${CLIENT_TYPE}
 
+RUN cd ${CLIENT_TYPE}
+
 CMD ["python3","main.py"]
 

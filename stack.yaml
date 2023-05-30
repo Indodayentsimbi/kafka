@@ -13,48 +13,48 @@ services:
       - kafka
     env_file: ./zookeeper/.env
 
-  broker_1:
+  broker-1:
     image: confluentinc/cp-kafka:7.3.0
-    hostname: broker_1
-    container_name: broker_1
+    hostname: broker-1
+    container_name: broker-1
     ports:
       - '9091:9091'
     networks: 
       - kafka
     depends_on: 
       - zookeeper  
-    env_file: ./brokers/.broker_1_env
+    env_file: ./brokers/.broker-1_env
     entrypoint: ["/bin/sh","-c"]
     command: | 
       "
-      kafka-topics --bootstrap-server broker_1:29091 --list 
-      kafka-topics --bootstrap-server broker_1:29091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
+      kafka-topics --bootstrap-server broker-1:29091 --list 
+      kafka-topics --bootstrap-server broker-1:29091,localhost:9091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
       " 
 
-  producer_a:
+  producer-a:
     build:
       context: ./clients
       args:
         CLIENT_TYPE: producers
-    hostname: producer_A
-    container_name: producer_A
+    hostname: producer-A
+    container_name: producer-A
     environment:
-      - CLIENT_ID=producer_A
+      - CLIENT_ID=producer-A
       - TOPIC=topicA
     networks: 
       - kafka
     depends_on: 
       - zookeeper
-      - broker_1  
+      - broker-1  
     env_file: ./clients/producers/.common_producers_env
 
-  consumer_a:
+  consumer-a:
     build:
       context: ./clients
       args:
         CLIENT_TYPE: consumers
-    hostname: consumer_A
-    container_name: consumer_A
+    hostname: consumer-A
+    container_name: consumer-A
     environment:
       - GROUP_ID=group_1
       - TOPIC=topicA
@@ -62,6 +62,6 @@ services:
       - kafka
     depends_on: 
       - zookeeper
-      - broker_1  
-      - producer_a
+      - broker-1  
+      - producer-a
     env_file: ./clients/consumers/.common_consumers_env     
