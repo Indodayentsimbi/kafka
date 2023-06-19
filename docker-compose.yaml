@@ -1,0 +1,112 @@
+version: "3.9"
+############################################
+networks:
+  kafka:
+    name: kafka
+############################################
+volumes:
+  zk-data:
+    driver: local
+  zk-txn-logs:
+    driver: local
+  kafka-data:
+    driver: local  
+############################################
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    restart: unless-stopped
+    networks: 
+      - kafka
+    env_file: ./zookeeper/.env
+    volumes:
+      - zk-data:/var/lib/zookeeper/data
+      - zk-txn-logs:/var/lib/zookeeper/log
+
+  broker-1:
+    image: confluentinc/cp-kafka:7.3.0
+    hostname: broker-1
+    container_name: broker-1
+    restart: unless-stopped
+    ports:
+      - '9091:9091'
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper  
+    env_file: ./brokers/.broker-1_env
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.3.0
+    hostname: schema-registry
+    container_name: schema-registry
+    networks: 
+      - kafka
+    depends_on:
+      - zookeeper
+      - broker-1
+    ports:
+      - "8081:8081"
+    env_file: ./schema-registry/.env
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.3.0
+    hostname: control-center
+    container_name: control-center
+    networks: 
+      - kafka    
+    depends_on:
+      - zookeeper
+      - broker-1
+      - schema-registry
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker-1:29091'
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+      
+  producer-a:
+    build:
+      context: ./clients
+      args:
+        CLIENT_TYPE: producers
+    hostname: producer-A
+    container_name: producer-A
+    environment:
+      - CLIENT_ID=producer-A
+      - TOPIC=topicA
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper
+      - broker-1 
+      - schema-registry
+    env_file: ./clients/producers/.common_producers_env
+
+  consumer-a:
+    build:
+      context: ./clients
+      args:
+        CLIENT_TYPE: consumers
+    hostname: consumer-A
+    container_name: consumer-A
+    environment:
+      - GROUP_ID=group_1
+      - TOPIC=topicA
+    networks: 
+      - kafka
+    depends_on: 
+      - zookeeper
+      - broker-1
+      - schema-registry
+    env_file: ./clients/consumers/.common_consumers_env     

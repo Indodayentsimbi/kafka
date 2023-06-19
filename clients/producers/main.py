@@ -1,5 +1,10 @@
 from confluent_kafka import Producer
-from utils import func_producer,callback 
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.json_schema import JSONSerializer
+from confluent_kafka.serialization import SerializationContext, MessageField
+from utils import func_producer,delivery_report,obj_to_dict 
+from schemas import customer
+import random
 import os
 from time import sleep
 import argparse
@@ -23,14 +28,24 @@ config = {"acks":acks,
 
 
 if __name__ == "__main__":
-    producer = Producer(config)     
+    producer = Producer(config)
+    schema_client = SchemaRegistryClient(conf={"url":"http://schema-registry:8081"}) # change to localhost:8081 when running locally
+    schema = schema_client.get_schema(schema_id=5)     
+    serializer = JSONSerializer(schema_str=schema,
+                                schema_registry_client=schema_client,
+                                to_dict=obj_to_dict,
+                                conf={"auto.register.schemas":False})
     i = 1
     while i < 100 :
+        name = "".join(random.choices(['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'],k=random.randint(4,15)))
+        surname = "".join(random.choices(['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'],k=random.randint(4,15)))
+        customer_inst = customer(id=i,name=name,surname=surname,age=random.randint(18,50),gender=random.choice(["male","female","other"]))
+        val = serializer(obj=customer_inst,ctx=SerializationContext(topic,MessageField.VALUE))
         func_producer(producer=producer,
                       topic=topic,
-                      value= str(i),
-                      key=str(i),
-                      callback=callback) 
+                      value= val,
+                      key=str(customer_inst.id),
+                      callback=delivery_report) 
         i += 1
         sleep(5)
     producer.flush()                      

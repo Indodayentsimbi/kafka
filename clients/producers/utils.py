@@ -1,4 +1,20 @@
-def callback(err, event):
+def obj_to_dict(customer, ctx):
+    """
+    Returns a dict representation of a customer instance for serialization.
+
+    Args:
+        customer: customer instance.
+
+        ctx (SerializationContext): Metadata pertaining to the serialization
+            operation.
+
+    Returns:
+        dict: Dict populated with customer attributes to be serialized.
+    """
+    return dict(id=customer.id,name=customer.name,surname=customer.surname,age=customer.age)
+
+
+def delivery_report(err, event):
     if err:
         print(f'Produce to topic {event.topic()} failed for event: {event.key()}')
     else:

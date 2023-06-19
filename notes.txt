@@ -1,8 +1,8 @@
 mnt /var/lib/kafka (log directory for kafka)
-kafka-topics --bootstrap-server broker_1:29092 --topic orders --partitions 3 --replication-factor 1 --create
-kafka-topics --bootstrap-server broker_1:29092 --topic orders --describe
-kafka-console-consumer --bootstrap-server broker_1:29092 --topic orders
-kafka-console-producer --bootstrap-server broker_1:29092 --topic orders 
+kafka-topics --bootstrap-server broker-1:29091,localhost:9091 --topic topicA --partitions 3 --replication-factor 1 --if-not-exists --create
+kafka-topics --bootstrap-server broker-1:29091,localhost:9091 --topic topicA --describe
+kafka-console-consumer --bootstrap-server broker-1:29091,localhost:9091 --topic topicA
+kafka-console-producer --bootstrap-server broker-1:29091,localhost:9091 --topic topicA 
 
 CLI KAFKA TOOLS
 
@@ -42,4 +42,3 @@ https://www.confluent.io/blog/kafka-listeners-explained/
 MULTI-NODE ENVIRONMENT
 
 https://docs.confluent.io/platform/current/kafka/multi-node.html#cp-multi-node
-

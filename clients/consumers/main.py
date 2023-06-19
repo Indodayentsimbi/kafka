@@ -1,5 +1,8 @@
 from confluent_kafka import Consumer, KafkaException
-from utils import func_consumer,callback 
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.json_schema import JSONDeserializer
+from confluent_kafka.serialization import SerializationContext,MessageField
+from utils import func_consumer,callback,dict_to_obj
 import os
 import argparse
 
@@ -23,11 +26,17 @@ config = {"group.id":group_id,
           "bootstrap.servers":servers,
           "isolation.level":isolation_level}
 
+MIN_COMMIT_COUNT = 30
 
 if __name__ == "__main__":
-    consumer = Consumer(config)  
+    consumer = Consumer(config)
+    schema_client = SchemaRegistryClient(conf={"url":"http://localhost:8081"}) # change to localhost:8081 when running locally
+    schema = schema_client.get_schema(schema_id=5)
+    deserializer = JSONDeserializer(schema_str=schema,from_dict=dict_to_obj,schema_registry_client=schema_client)
     try:
         func_consumer(consumer=consumer,topics=[topic],callback=callback) 
+        # an event has the following atributes: topic(),partition(),value(),key(),error(),offset(),headers(),timestamp()
+        event_cnt = 0
         while True:
             event = consumer.poll(1)
             if event is None:
@@ -35,12 +44,27 @@ if __name__ == "__main__":
             elif event.error():
                 raise KafkaException(event.error())
             else:
-                val = event.value().decode("utf-8")
-                partition = event.partition()
-                print("Received: {} from partition {} on topic {}".format(val,partition,event.topic())) 
-                consumer.commit(event)     
+                event_cnt += 1
+                # val = event.value().decode("utf-8")
+                # partition = event.partition()
+                # print("Received: {} from partition {} on topic {}".format(val,partition,event.topic()))
+                print(event.value())
+                customer = deserializer(data=event.value(),ctx=SerializationContext(topic,MessageField.VALUE))
+                if customer is not None:
+                    print(customer)
+                ### HERE YOU CAN CALL ANOTHER FUNCTION TO PROCESS THE EVENT ###
+                
+                # Use this method to commit offsets if you have ‘enable.auto.commit’ set to False
+                
+                consumer.commit(message=event,asynchronous=True) # this returns None
+
+                ## OR ##
+
+                # if event_cnt % MIN_COMMIT_COUNT == 0:
+                #     consumer.commit(message=event,asynchronous=False) # this returns TopicPartition              
     except KeyboardInterrupt:
         print("Cancelled by user")
     finally:
+        # trigger a group rebalance which ensures that any partitions owned by the consumer gets re-assigned to another member in the group
         consumer.close()                         
 

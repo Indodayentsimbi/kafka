@@ -1,3 +1,12 @@
+from schemas import customer
+
+def dict_to_obj(customer_dict, ctx):
+    """
+    Receives a dictionary and converts back to customer object
+    """
+    return customer(customer_dict["id"],customer_dict["name"],customer_dict["surname"],customer_dict["age"])
+
+
 def callback(consumer, partitions):
     for p in partitions:
         print(f'Assigned to {p.topic}, partition {p.partition}')
