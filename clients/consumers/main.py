@@ -30,7 +30,7 @@ MIN_COMMIT_COUNT = 30
 
 if __name__ == "__main__":
     consumer = Consumer(config)
-    schema_client = SchemaRegistryClient(conf={"url":"http://localhost:8081"}) # change to localhost:8081 when running locally
+    schema_client = SchemaRegistryClient(conf={"url":"http://schema-registry:8081"}) # change to localhost:8081 when running locally
     schema = schema_client.get_schema(schema_id=5)
     deserializer = JSONDeserializer(schema_str=schema,from_dict=dict_to_obj,schema_registry_client=schema_client)
     try:
